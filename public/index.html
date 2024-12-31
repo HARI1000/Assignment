@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Twitter Trends Scraper</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .trend {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f5f8fa;
+            border-radius: 5px;
+        }
+
+        .meta {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 15px;
+        }
+
+        button {
+            padding: 5px 10px;
+            background-color: #1da1f2;
+            color: white;
+            font-size: large;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+        }
+
+        .loading {
+            display: none;
+            margin-top: 10px;
+        }
+
+        .error {
+            color: #dc3545;
+            margin-top: 10px;
+            display: none;
+        }
+        .results1{
+            font-weight: 500;
+            font-size:larger;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Twitter Trending Topics Scraper</h1>
+    <button id="scrapeButton" onclick="scrapeTrends()">Click Here to run the script</button>
+    <div id="loading" class="loading">Scraping trends...</div>
+    <div id="error" class="error"></div>
+    <div id="results" class="results">
+        <h2 class="meta" >These are the trending things happening at <span id="meta"></span></h2>
+        <div id="trendsContainer"></div>
+        <div id="meta1" class="meta"></div>
+        <div id="mongoData"></div>
+    </div>
+    <pre id="results1" class="results1"></pre>
+    <button id="scrapeButton" onclick="scrapeTrends()">Click Here to run the script Again</button>
+    <script>
+        function scrapeTrends() {
+            const button = document.getElementById('scrapeButton');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            const error = document.getElementById('error');
+
+            button.disabled = true;
+            loading.style.display = 'block';
+            error.style.display = 'none';
+
+            fetch('http://localhost:3000/scrape', {
+                method: 'POST'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log("hi", data);
+                    if (data.success) {
+                        displayResults(data.data, data.rawData);
+                    } else {
+                        error.textContent = 'Error: ' + data.error;
+                        error.style.display = 'block';
+                    }
+                })
+                .catch(err => {
+                    console.log(err);
+                    error.textContent = 'Error: ' + err.message;
+                    error.style.display = 'block';
+                })
+                .finally(() => {
+                    button.disabled = false;
+                    loading.style.display = 'none';
+                });
+        }
+
+        function displayResults(data, rawData) {
+            const trendsContainer = document.getElementById('trendsContainer');
+            const meta = document.getElementById('meta');
+            const meta1 = document.getElementById('meta1');
+            const results = document.getElementById('results');
+            const results1 = document.getElementById('results1');
+            trendsContainer.innerHTML = '';
+            data.trends.forEach((trend, index) => {
+                if (trend) {
+                    const trendDiv = document.createElement('div');
+                    trendDiv.className = 'trend';
+                    trendDiv.textContent = `${index + 1}. ${trend}`;
+                    trendsContainer.appendChild(trendDiv);
+                }
+            });
+            meta.innerHTML = `: ${new Date(data.timestamp).toLocaleString()}<br>`;
+            meta1.innerHTML = `
+                ID: ${data.id}<br>
+                IP Address: ${data.ip_address}<br>
+            `;
+            results1.innerHTML = `${JSON.stringify(rawData, null, 2)}`;
+            results.style.display = 'block';
+        }
+    </script>
+</body>
+
+</html>
